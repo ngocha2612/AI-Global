@@ -44,7 +44,7 @@ st.markdown("Monitor Chinese companies’ global investment, factory, and R&D ex
 # -------------------- METRICS --------------------
 col1, col2, col3, col4 = st.columns(4)
 
-tracked_companies = df["company_main"].nunique()
+tracked_companies = df["company_main"].nunique() if "company_main" in df.columns else df["company_name"].nunique()
 active_projects = len(df)
 
 with col1:
@@ -62,21 +62,6 @@ total_pages = max(1, (total_projects + items_per_page - 1) // items_per_page)
 # Initialize session state
 if "current_page" not in st.session_state:
     st.session_state.current_page = 1
-
-# Pagination buttons
-col_prev, col_page, col_next = st.columns([1, 2, 1])
-with col_prev:
-    if st.button("⬅️ Previous") and st.session_state.current_page > 1:
-        st.session_state.current_page -= 1
-with col_next:
-    if st.button("Next ➡️") and st.session_state.current_page < total_pages:
-        st.session_state.current_page += 1
-
-with col_page:
-    st.markdown(
-        f"<p style='text-align:center;'>Page {st.session_state.current_page} of {total_pages}</p>",
-        unsafe_allow_html=True,
-    )
 
 # Slice the dataframe for the current page
 start_idx = (st.session_state.current_page - 1) * items_per_page
@@ -99,6 +84,25 @@ with left_col:
                 st.write(row.get("summary_of_project", "No summary available."))
                 st.markdown(f"💰 **Investment:** {row.get('investment_amount', 'N/A')} M")
                 st.divider()
+
+        # -------------------- PAGINATION CONTROLS (MOVED TO END) --------------------
+        st.divider()
+        col_prev, col_page, col_next = st.columns([1, 2, 1])
+        with col_prev:
+            if st.session_state.current_page > 1:
+                if st.button("⬅️ Previous"):
+                    st.session_state.current_page -= 1
+                    st.rerun()
+        with col_page:
+            st.markdown(
+                f"<p style='text-align:center;'>Page {st.session_state.current_page} of {total_pages}</p>",
+                unsafe_allow_html=True,
+            )
+        with col_next:
+            if st.session_state.current_page < total_pages:
+                if st.button("Next ➡️"):
+                    st.session_state.current_page += 1
+                    st.rerun()
 
 with right_col:
     st.subheader("📊 Regional Overview")
