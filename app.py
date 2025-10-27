@@ -88,7 +88,7 @@ with right_col:
     st.subheader("📊 Regional Overview")
     if not filtered_df.empty and "host_country" in filtered_df.columns:
         chart_data = filtered_df.groupby("host_country").size().reset_index(name="Projects")
-        fig = px.bar(chart_data, x="Projects", y="region", orientation="h", title="Projects by Region")
+        fig = px.bar(chart_data, x="Projects", y="host_country", orientation="h", title="Projects by Region")
         st.plotly_chart(fig, use_container_width=True)
     else:
         st.info("No data available for chart.")
