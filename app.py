@@ -114,7 +114,7 @@ with right_col:
     if "date" in df.columns:
         recent = df.sort_values("date", ascending=False).head(5)
         for _, r in recent.iterrows():
-            st.markdown(f"- **{r['company_name']}** — {r['summary'][:70]}...  *(updated {r['date']})*")
+            st.markdown(f"- **{r['company_name']}** — {r['summary_of_project'][:70]}...  *(updated {r['date']})*")
     ###
     st.markdown('<div class="section-title">⚙️ Quick Actions</div>', unsafe_allow_html=True)
     st.button("Generate Weekly Report")
