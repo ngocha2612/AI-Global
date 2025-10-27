@@ -69,8 +69,8 @@ with left_col:
     # Optional filters
     # regions = st.multiselect("Filter by Region", sorted(df["region"].dropna().unique()))
     # industries = st.multiselect("Filter by Industry", sorted(df["industry"].dropna().unique()) if "industry" in df.columns else [])
-      host_country = st.multiselect("Filter by Region", sorted(df["host_country"].dropna().unique()))
-      sector = st.multiselect("Filter by Industry", sorted(df["sector"].dropna().unique()) if "sector" in df.columns else [])
+    host_country = st.multiselect("Filter by Region", sorted(df["host_country"].dropna().unique()))
+    sector = st.multiselect("Filter by Industry", sorted(df["sector"].dropna().unique()) if "sector" in df.columns else [])
     
     filtered = df.copy()
     if host_country:
