@@ -19,9 +19,9 @@ st.title("🌏 Global Expansion Tracker")
 # ===================== METRICS =====================
 col1, col2, col3, col4 = st.columns(4)
 col1.metric("Total Projects", len(df))
-col2.metric("Unique Companies", df["company_name"].nunique() if "company_name" in df else 0)
+col2.metric("Unique Companies", df["company_main"].nunique() if "company_main" in df else 0)
 col3.metric("Countries Covered", df["host_country"].nunique() if "host_country" in df else 0)
-col4.metric("Average Investment (M USD)", f"{df['investment_amount'].mean():.2f}" if "investment_amount" in df else "N/A")
+#col4.metric("Average Investment (M USD)", f"{df['investment_amount'].mean():.2f}" if "investment_amount" in df else "N/A")
 
 st.divider()
 
