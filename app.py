@@ -1,124 +1,94 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from datetime import datetime, timedelta
 
-# ===================== PAGE CONFIG =====================
-st.set_page_config(page_title="Go-Global Customer Intelligence", layout="wide")
+st.set_page_config(page_title="Global Expansion Tracker", layout="wide")
 
-# ===================== LOAD DATA =====================
+# -------------------- LOAD DATA --------------------
 @st.cache_data
 def load_data():
     df = pd.read_csv("projects.csv")
-    # Normalize columns (you can rename based on your CSV headers)
-    df.columns = [c.strip().lower().replace(" ", "_") for c in df.columns]
-    # Ensure date and investment types
-    #if "date" in df.columns:
-        #df["date"] = pd.to_datetime(df["date"], errors="coerce").dt.date
-    #if "investment_amount" in df.columns:
-        #df["investment_amount"] = pd.to_numeric(df["investment_amount"], errors="coerce")
-    return df.dropna(subset=["company_name", "host_country"])
+    df.columns = df.columns.str.strip().str.lower()
+    ###
+    if "investment" in df.columns:
+        df["investment"] = pd.to_numeric(df["investment"], errors="coerce")
+    if "date" in df.columns:
+        df["date"] = pd.to_datetime(df["date"], errors="coerce").dt.date
+    ###
+    return df
 
 df = load_data()
 
-# ===================== HEADER =====================
-st.markdown("""
-    <style>
-        .main-title {font-size: 30px; font-weight: 700; color: #1E293B;}
-        .subtitle {font-size: 16px; color: #475569; margin-bottom: 1.5rem;}
-        .metric-card {padding: 1rem; background: #F8FAFC; border-radius: 1rem; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05);}
-        .project-card {background: white; border-radius: 1rem; padding: 1.2rem; margin-bottom: 1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.05);}
-        .project-title {font-size: 18px; font-weight: 600; color: #0f172a;}
-        .project-summary {color: #475569; margin-top: 0.2rem;}
-        .tag {display: inline-block; padding: 0.25rem 0.6rem; background: #e2e8f0; border-radius: 9999px; font-size: 12px; margin-right: 5px;}
-        .right-panel {background: #F8FAFC; padding: 1rem; border-radius: 1rem;}
-        .section-title {font-weight: 600; color: #1e293b; font-size: 16px; margin-bottom: 0.8rem;}
-    </style>
-""", unsafe_allow_html=True)
+# -------------------- SIDEBAR FILTERS --------------------
+st.sidebar.header("Filters")
 
-col1, col2 = st.columns([0.7, 0.3])
-with col1:
-    st.markdown('<div class="main-title">Go-Global Customer Intelligence</div>', unsafe_allow_html=True)
-    st.markdown('<div class="subtitle">AI-Powered Decision Support System</div>', unsafe_allow_html=True)
-with col2:
-    st.markdown("<div style='text-align:right'><button>📤 Export Report</button> <button>🔄 Sync Data</button></div>", unsafe_allow_html=True)
+# --- Search by company name
+search_term = st.sidebar.text_input("🔍 Search by company name")
 
-st.markdown("---")
+# --- Region filter
+host_country = sorted([r for r in df["host_country"].dropna().unique()])
+selected_regions = st.sidebar.multiselect("🌏 Select Region(s)", host_country)
 
-# ===================== METRICS =====================
-tracked_customers = df["company_name"].nunique()
-active_opps = len(df)
-##avg_investment = df["investment_amount"].mean() if "investment_amount" in df.columns else 0
-##recent_projects = df[df["date"] >= (datetime.now().date() - timedelta(days=7))] if "date" in df.columns else []
+# --- Industry filter
+sectors = sorted([i for i in df["sector"].dropna().unique()])
+selected_industries = st.sidebar.multiselect("🏭 Select Industry", sectors)
 
+# --- Apply filters
+filtered_df = df.copy()
+if search_term:
+    filtered_df = filtered_df[filtered_df["company_name"].str.contains(search_term, case=False, na=False)]
+if selected_regions:
+    filtered_df = filtered_df[filtered_df["host_country"].isin(selected_regions)]
+if selected_industries:
+    filtered_df = filtered_df[filtered_df["sector"].isin(selected_industries)]
+
+# -------------------- DASHBOARD HEADER --------------------
+st.title("🌐 Global Expansion Tracker")
+st.markdown("Monitor Chinese companies’ global investment, factory, and R&D expansion projects.")
+
+# -------------------- METRICS --------------------
 col1, col2, col3, col4 = st.columns(4)
-col1.metric("Tracked Customers", tracked_customers)
-col2.metric("Active Opportunities", active_opps)
-##col3.metric("Avg Investment", f"${avg_investment:,.0f}M")
-##col4.metric("Recent Projects (7d)", len(recent_projects))
 
-st.markdown("")
+tracked_companies = df["company_name"].nunique()
+active_projects = len(df)
+#avg_investment = df["investment"].mean() if "investment" in df.columns else 0
+#recent_projects = df[df["date"] >= (pd.Timestamp.now().date() - pd.Timedelta(days=7))] if "date" in df.columns else pd.DataFrame()
 
-# ===================== LAYOUT =====================
-left_col, right_col = st.columns([0.65, 0.35])
+with col1:
+    st.metric("Tracked Companies", tracked_companies)
+with col2:
+    st.metric("Active Projects", active_projects)
+###
+with col3:
+    st.metric("Avg Investment", f"${avg_investment:,.0f}M" if avg_investment else "N/A")
+with col4:
+    st.metric("Recent (7d)", len(recent_projects))
+###
 
-# ========== LEFT PANEL: PROJECT CARDS ==========
+st.divider()
+
+# -------------------- MAIN LAYOUT --------------------
+left_col, right_col = st.columns([2.5, 1.5], gap="large")
+
 with left_col:
-    st.markdown("### Active Projects")
+    st.subheader("📋 Project List")
 
-    # Optional filters
-    # regions = st.multiselect("Filter by Region", sorted(df["region"].dropna().unique()))
-    # industries = st.multiselect("Filter by Industry", sorted(df["industry"].dropna().unique()) if "industry" in df.columns else [])
-    host_country = st.multiselect("Filter by Region", sorted(df["host_country"].dropna().unique()))
-    sector = st.multiselect("Filter by Industry", sorted(df["sector"].dropna().unique()) if "sector" in df.columns else [])
-    
-    filtered = df.copy()
-    if host_country:
-        filtered = filtered[filtered["host_country"].isin(host_country)]
-    if sector and "sector" in df.columns:
-        filtered = filtered[filtered["sector"].isin(sector)]
+    if filtered_df.empty:
+        st.warning("No projects found for your search/filter.")
+    else:
+        for _, row in filtered_df.iterrows():
+            with st.container():
+                st.markdown(f"**{row['company_name']}** — {row.get('host_country', 'N/A')} • {row.get('sector', 'N/A')}")
+                st.caption(f"📅 {row.get('date', 'N/A')}")
+                st.write(row.get("summary_of_project", "No summary available."))
+                st.markdown(f"💰 **Investment:** {row.get('investment_amount', 'N/A')} M")
+                st.divider()
 
-    # Display cards
-    for _, row in filtered.iterrows():
-        st.markdown(f"""
-        <div class="project-card">
-            <div class="project-title">{row['company_name']}</div>
-            <div class="project-summary">{row.get('summary_of_project', '')}</div>
-            <div style="margin-top: 0.5rem;">
-                <span class="tag">{row.get('host_country', '')}</span>
-                <span class="tag">{row.get('sector', '')}</span>
-                <span class="tag">${row.get('investment_amount', 0):,.0f}M</span>
-                <span class="tag">{row.get('date', '')}</span>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-# ========== RIGHT PANEL ==========
 with right_col:
-    st.markdown('<div class="right-panel">', unsafe_allow_html=True)
-    st.markdown('<div class="section-title">📊 Regional Overview</div>', unsafe_allow_html=True)
-
-    # Chart: average investment by region
-    ###
-    if "region" in df.columns:
-        chart_data = df.groupby("region")["investment"].sum().reset_index()
-        fig = px.bar(chart_data, x="region", y="investment", color="region",
-                     labels={"investment": "Total Investment (M USD)", "region": "Region"},
-                     title=None)
-        fig.update_layout(showlegend=False, height=300, margin=dict(l=0, r=0, t=0, b=0))
+    st.subheader("📊 Regional Overview")
+    if not filtered_df.empty and "host_country" in filtered_df.columns:
+        chart_data = filtered_df.groupby("host_country").size().reset_index(name="Projects")
+        fig = px.bar(chart_data, x="Projects", y="region", orientation="h", title="Projects by Region")
         st.plotly_chart(fig, use_container_width=True)
-    ###
-    # Recent insights
-    ###
-    st.markdown('<div class="section-title">🕒 Recent Insights</div>', unsafe_allow_html=True)
-    if "date" in df.columns:
-        recent = df.sort_values("date", ascending=False).head(5)
-        for _, r in recent.iterrows():
-            st.markdown(f"- **{r['company_name']}** — {r['summary_of_project'][:200]}...  *(updated {r['date']})*")
-    ###
-    st.markdown('<div class="section-title">⚙️ Quick Actions</div>', unsafe_allow_html=True)
-    st.button("Generate Weekly Report")
-    st.button("Schedule Team Review")
-    st.button("Export Customer Insights")
-
-    st.markdown("</div>", unsafe_allow_html=True)
+    else:
+        st.info("No data available for chart.")
