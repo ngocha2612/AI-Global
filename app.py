@@ -13,11 +13,11 @@ def load_data():
     # Normalize columns (you can rename based on your CSV headers)
     df.columns = [c.strip().lower().replace(" ", "_") for c in df.columns]
     # Ensure date and investment types
-    if "date" in df.columns:
-        df["date"] = pd.to_datetime(df["date"], errors="coerce").dt.date
-    if "investment" in df.columns:
-        df["investment"] = pd.to_numeric(df["investment"], errors="coerce")
-    return df.dropna(subset=["company_name", "region"])
+    #if "date" in df.columns:
+        #df["date"] = pd.to_datetime(df["date"], errors="coerce").dt.date
+    #if "investment_amount" in df.columns:
+        #df["investment_amount"] = pd.to_numeric(df["investment_amount"], errors="coerce")
+    return df.dropna(subset=["company_name", "host_country"])
 
 df = load_data()
 
@@ -48,14 +48,14 @@ st.markdown("---")
 # ===================== METRICS =====================
 tracked_customers = df["company_name"].nunique()
 active_opps = len(df)
-avg_investment = df["investment"].mean() if "investment" in df.columns else 0
-recent_projects = df[df["date"] >= (datetime.now().date() - timedelta(days=7))] if "date" in df.columns else []
+##avg_investment = df["investment_amount"].mean() if "investment_amount" in df.columns else 0
+##recent_projects = df[df["date"] >= (datetime.now().date() - timedelta(days=7))] if "date" in df.columns else []
 
 col1, col2, col3, col4 = st.columns(4)
 col1.metric("Tracked Customers", tracked_customers)
 col2.metric("Active Opportunities", active_opps)
-col3.metric("Avg Investment", f"${avg_investment:,.0f}M")
-col4.metric("Recent Projects (7d)", len(recent_projects))
+##col3.metric("Avg Investment", f"${avg_investment:,.0f}M")
+##col4.metric("Recent Projects (7d)", len(recent_projects))
 
 st.markdown("")
 
@@ -67,25 +67,27 @@ with left_col:
     st.markdown("### Active Projects")
 
     # Optional filters
-    regions = st.multiselect("Filter by Region", sorted(df["region"].dropna().unique()))
-    industries = st.multiselect("Filter by Industry", sorted(df["industry"].dropna().unique()) if "industry" in df.columns else [])
-
+    # regions = st.multiselect("Filter by Region", sorted(df["region"].dropna().unique()))
+    # industries = st.multiselect("Filter by Industry", sorted(df["industry"].dropna().unique()) if "industry" in df.columns else [])
+      host_country = st.multiselect("Filter by Region", sorted(df["host_country"].dropna().unique()))
+      sector = st.multiselect("Filter by Industry", sorted(df["sector"].dropna().unique()) if "sector" in df.columns else [])
+    
     filtered = df.copy()
-    if regions:
-        filtered = filtered[filtered["region"].isin(regions)]
-    if industries and "industry" in df.columns:
-        filtered = filtered[filtered["industry"].isin(industries)]
+    if host_country:
+        filtered = filtered[filtered["host_country"].isin(host_country)]
+    if sector and "sector" in df.columns:
+        filtered = filtered[filtered["sector"].isin(sector)]
 
     # Display cards
     for _, row in filtered.iterrows():
         st.markdown(f"""
         <div class="project-card">
             <div class="project-title">{row['company_name']}</div>
-            <div class="project-summary">{row.get('summary', '')}</div>
+            <div class="project-summary">{row.get('summary_of_project', '')}</div>
             <div style="margin-top: 0.5rem;">
-                <span class="tag">{row.get('region', '')}</span>
-                <span class="tag">{row.get('industry', '')}</span>
-                <span class="tag">${row.get('investment', 0):,.0f}M</span>
+                <span class="tag">{row.get('host_country', '')}</span>
+                <span class="tag">{row.get('sector', '')}</span>
+                <span class="tag">${row.get('investment_amount', 0):,.0f}M</span>
                 <span class="tag">{row.get('date', '')}</span>
             </div>
         </div>
@@ -97,6 +99,7 @@ with right_col:
     st.markdown('<div class="section-title">📊 Regional Overview</div>', unsafe_allow_html=True)
 
     # Chart: average investment by region
+    ###
     if "region" in df.columns:
         chart_data = df.groupby("region")["investment"].sum().reset_index()
         fig = px.bar(chart_data, x="region", y="investment", color="region",
@@ -104,14 +107,15 @@ with right_col:
                      title=None)
         fig.update_layout(showlegend=False, height=300, margin=dict(l=0, r=0, t=0, b=0))
         st.plotly_chart(fig, use_container_width=True)
-
+    ###
     # Recent insights
+    ###
     st.markdown('<div class="section-title">🕒 Recent Insights</div>', unsafe_allow_html=True)
     if "date" in df.columns:
         recent = df.sort_values("date", ascending=False).head(5)
         for _, r in recent.iterrows():
             st.markdown(f"- **{r['company_name']}** — {r['summary'][:70]}...  *(updated {r['date']})*")
-
+    ###
     st.markdown('<div class="section-title">⚙️ Quick Actions</div>', unsafe_allow_html=True)
     st.button("Generate Weekly Report")
     st.button("Schedule Team Review")
