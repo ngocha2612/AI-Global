@@ -49,7 +49,7 @@ st.markdown("Monitor Chinese companies’ global investment, factory, and R&D ex
 # -------------------- METRICS --------------------
 col1, col2, col3, col4 = st.columns(4)
 
-tracked_companies = df["company_name"].nunique()
+tracked_companies = df["company_main"].nunique()
 active_projects = len(df)
 #avg_investment = df["investment"].mean() if "investment" in df.columns else 0
 #recent_projects = df[df["date"] >= (pd.Timestamp.now().date() - pd.Timedelta(days=7))] if "date" in df.columns else pd.DataFrame()
