@@ -9,12 +9,10 @@ st.set_page_config(page_title="Global Expansion Tracker", layout="wide")
 def load_data():
     df = pd.read_csv("projects.csv")
     df.columns = df.columns.str.strip().str.lower()
-    ###
-    if "investment" in df.columns:
-        df["investment"] = pd.to_numeric(df["investment"], errors="coerce")
+    if "investment_amount" in df.columns:
+        df["investment_amount"] = pd.to_numeric(df["investment_amount"], errors="coerce")
     if "date" in df.columns:
         df["date"] = pd.to_datetime(df["date"], errors="coerce").dt.date
-    ###
     return df
 
 df = load_data()
@@ -22,25 +20,22 @@ df = load_data()
 # -------------------- SIDEBAR FILTERS --------------------
 st.sidebar.header("Filters")
 
-# --- Search by company name
 search_term = st.sidebar.text_input("🔍 Search by company name")
 
-# --- Region filter
-host_country = sorted([r for r in df["host_country"].dropna().unique()])
-selected_regions = st.sidebar.multiselect("🌏 Select Region(s)", host_country)
+host_countries = sorted(df["host_country"].dropna().unique()) if "host_country" in df.columns else []
+selected_countries = st.sidebar.multiselect("🌏 Select Host Country", host_countries)
 
-# --- Industry filter
-sectors = sorted([i for i in df["sector"].dropna().unique()])
-selected_industries = st.sidebar.multiselect("🏭 Select Industry", sectors)
+sectors = sorted(df["sector"].dropna().unique()) if "sector" in df.columns else []
+selected_sectors = st.sidebar.multiselect("🏭 Select Sector", sectors)
 
-# --- Apply filters
+# -------------------- APPLY FILTERS --------------------
 filtered_df = df.copy()
 if search_term:
     filtered_df = filtered_df[filtered_df["company_name"].str.contains(search_term, case=False, na=False)]
-if selected_regions:
-    filtered_df = filtered_df[filtered_df["host_country"].isin(selected_regions)]
-if selected_industries:
-    filtered_df = filtered_df[filtered_df["sector"].isin(selected_industries)]
+if selected_countries:
+    filtered_df = filtered_df[filtered_df["host_country"].isin(selected_countries)]
+if selected_sectors:
+    filtered_df = filtered_df[filtered_df["sector"].isin(selected_sectors)]
 
 # -------------------- DASHBOARD HEADER --------------------
 st.title("🌐 Global Expansion Tracker")
@@ -51,21 +46,42 @@ col1, col2, col3, col4 = st.columns(4)
 
 tracked_companies = df["company_main"].nunique()
 active_projects = len(df)
-#avg_investment = df["investment"].mean() if "investment" in df.columns else 0
-#recent_projects = df[df["date"] >= (pd.Timestamp.now().date() - pd.Timedelta(days=7))] if "date" in df.columns else pd.DataFrame()
 
 with col1:
     st.metric("Tracked Companies", tracked_companies)
 with col2:
     st.metric("Active Projects", active_projects)
-###
-#with col3:
-#    st.metric("Avg Investment", f"${avg_investment:,.0f}M" if avg_investment else "N/A")
-#with col4:
-#    st.metric("Recent (7d)", len(recent_projects))
-###
 
 st.divider()
+
+# -------------------- PAGINATION SETUP --------------------
+items_per_page = 5  # Number of project cards per page
+total_projects = len(filtered_df)
+total_pages = max(1, (total_projects + items_per_page - 1) // items_per_page)
+
+# Initialize session state
+if "current_page" not in st.session_state:
+    st.session_state.current_page = 1
+
+# Pagination buttons
+col_prev, col_page, col_next = st.columns([1, 2, 1])
+with col_prev:
+    if st.button("⬅️ Previous") and st.session_state.current_page > 1:
+        st.session_state.current_page -= 1
+with col_next:
+    if st.button("Next ➡️") and st.session_state.current_page < total_pages:
+        st.session_state.current_page += 1
+
+with col_page:
+    st.markdown(
+        f"<p style='text-align:center;'>Page {st.session_state.current_page} of {total_pages}</p>",
+        unsafe_allow_html=True,
+    )
+
+# Slice the dataframe for the current page
+start_idx = (st.session_state.current_page - 1) * items_per_page
+end_idx = start_idx + items_per_page
+page_df = filtered_df.iloc[start_idx:end_idx]
 
 # -------------------- MAIN LAYOUT --------------------
 left_col, right_col = st.columns([2.5, 1.5], gap="large")
@@ -73,10 +89,10 @@ left_col, right_col = st.columns([2.5, 1.5], gap="large")
 with left_col:
     st.subheader("📋 Project List")
 
-    if filtered_df.empty:
+    if page_df.empty:
         st.warning("No projects found for your search/filter.")
     else:
-        for _, row in filtered_df.iterrows():
+        for _, row in page_df.iterrows():
             with st.container():
                 st.markdown(f"**{row['company_name']}** — {row.get('host_country', 'N/A')} • {row.get('sector', 'N/A')}")
                 st.caption(f"📅 {row.get('date', 'N/A')}")
