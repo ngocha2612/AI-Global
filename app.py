@@ -11,8 +11,11 @@ def load_data():
     df.columns = df.columns.str.strip().str.lower()
     if "investment_amount" in df.columns:
         df["investment_amount"] = pd.to_numeric(df["investment_amount"], errors="coerce")
-    if "date" in df.columns:
-        df["date"] = pd.to_datetime(df["date"], errors="coerce").dt.date
+    #if "date" in df.columns:
+        #df["date"] = pd.to_datetime(df["date"], errors="coerce").dt.date
+
+    df = df[(df['host_country'] != "China") & (df["host_country"] != "Hong Kong") & (df["host_country"].isna()==False)]
+    df = df[df["project_type"].isna()==False]
     return df
 
 df = load_data()
@@ -72,21 +75,23 @@ page_df = filtered_df.iloc[start_idx:end_idx]
 left_col, right_col = st.columns([2.5, 1.5], gap="large")
 
 with left_col:
-    st.subheader("📋 Project List")
+    st.header("📋 Project List")
 
     if page_df.empty:
         st.warning("No projects found for your search/filter.")
     else:
         for _, row in page_df.iterrows():
             with st.container():
-                st.markdown(f"**{row['company_name']}** — {row.get('host_country', 'N/A')} • {row.get('sector', 'N/A')}")
-                st.caption(f"📅 {row.get('date', 'N/A')}")
+                st.subheader(f"**{row['company_name']}**")
+                st.markdown(f"📍 {row.get('host_country', 'N/A')} • {row.get('sector', 'N/A')}")
+                st.markdown(f"**Project Scope:** {row.get('project_type', 'N/A')}")
                 st.write(row.get("summary_of_project", "No summary available."))
-                st.markdown(f"💰 **Investment:** {row.get('investment_amount', 'N/A')} M")
+                st.markdown(f"📅 **Project Stage:** {row.get('project_stage', 'N/A')}")
+                st.markdown(f"💰 **Investment:** {row.get('investment_amount', 'N/A')}")
+                st.caption(f"Last updated: {row.get('date', 'N/A')}")
                 st.divider()
 
         # -------------------- PAGINATION CONTROLS (MOVED TO END) --------------------
-        st.divider()
         col_prev, col_page, col_next = st.columns([1, 2, 1])
         with col_prev:
             if st.session_state.current_page > 1:
