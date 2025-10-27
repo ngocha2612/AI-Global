@@ -1,135 +1,120 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from datetime import datetime
+from datetime import datetime, timedelta
 
-# -------------------- PAGE CONFIG --------------------
+# ===================== PAGE CONFIG =====================
 st.set_page_config(page_title="Go-Global Customer Intelligence", layout="wide")
 
-# -------------------- STYLES --------------------
+# ===================== LOAD DATA =====================
+@st.cache_data
+def load_data():
+    df = pd.read_csv("projects.csv")
+    # Normalize columns (you can rename based on your CSV headers)
+    df.columns = [c.strip().lower().replace(" ", "_") for c in df.columns]
+    # Ensure date and investment types
+    if "date" in df.columns:
+        df["date"] = pd.to_datetime(df["date"], errors="coerce").dt.date
+    if "investment" in df.columns:
+        df["investment"] = pd.to_numeric(df["investment"], errors="coerce")
+    return df.dropna(subset=["company_name", "region"])
+
+df = load_data()
+
+# ===================== HEADER =====================
 st.markdown("""
-<style>
-/* Header */
-.header {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 0.5rem 1rem; border-bottom: 1px solid #eee;
-}
-.header-title { font-size: 1.6rem; font-weight: 600; color: #222; }
-.header-sub { font-size: 0.9rem; color: #777; margin-top: -5px; }
-button[data-baseweb="button"] { border-radius: 8px !important; }
-
-/* Metric cards */
-.metric-container {
-    display: flex; justify-content: space-between; margin: 1rem 0 1.5rem 0;
-}
-.metric-card {
-    flex: 1; background: #fff; border-radius: 12px; padding: 1rem;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.08); margin-right: 1rem;
-}
-.metric-card:last-child { margin-right: 0; }
-.metric-value { font-size: 1.4rem; font-weight: 600; color: #111; }
-.metric-label { color: #777; font-size: 0.9rem; }
-
-/* Project cards */
-.project-card {
-    background: #fff; border-radius: 12px; padding: 1rem 1.2rem;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.06); margin-bottom: 1rem;
-}
-.project-title { font-weight: 600; font-size: 1.1rem; color: #222; }
-.project-meta { color: #666; font-size: 0.9rem; margin-top: -2px; }
-.project-summary { margin-top: 0.5rem; font-size: 0.9rem; color: #333; }
-
-/* Sidebar cards */
-.sidebar-card {
-    background: #fff; border-radius: 12px; padding: 1rem;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.05); margin-bottom: 1rem;
-}
-.sidebar-title { font-weight: 600; margin-bottom: 0.8rem; color: #222; }
-</style>
+    <style>
+        .main-title {font-size: 30px; font-weight: 700; color: #1E293B;}
+        .subtitle {font-size: 16px; color: #475569; margin-bottom: 1.5rem;}
+        .metric-card {padding: 1rem; background: #F8FAFC; border-radius: 1rem; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05);}
+        .project-card {background: white; border-radius: 1rem; padding: 1.2rem; margin-bottom: 1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.05);}
+        .project-title {font-size: 18px; font-weight: 600; color: #0f172a;}
+        .project-summary {color: #475569; margin-top: 0.2rem;}
+        .tag {display: inline-block; padding: 0.25rem 0.6rem; background: #e2e8f0; border-radius: 9999px; font-size: 12px; margin-right: 5px;}
+        .right-panel {background: #F8FAFC; padding: 1rem; border-radius: 1rem;}
+        .section-title {font-weight: 600; color: #1e293b; font-size: 16px; margin-bottom: 0.8rem;}
+    </style>
 """, unsafe_allow_html=True)
 
-# -------------------- HEADER --------------------
-with st.container():
-    st.markdown("""
-    <div class="header">
-        <div>
-            <div class="header-title">Go-Global Customer Intelligence</div>
-            <div class="header-sub">AI-Powered Decision Support System</div>
-        </div>
-        <div>
-            <button class="css-1cpxqw2 edgvbvh10">Sync Data</button>
-            <button class="css-1cpxqw2 edgvbvh10" style="margin-left:8px;">Export Report</button>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-# -------------------- SAMPLE DATA --------------------
-data = [
-    {"company_name": "BYD Southeast Asia Holdings", "region": "Southeast Asia", "industry": "Automotive & Manufacturing",
-     "summary": "New EV battery plant announced in Thailand – $800M investment", "investment": 800, "date": "2025-10-05"},
-    {"company_name": "CATL Europe Battery Innovation", "region": "Europe", "industry": "Energy & Battery Tech",
-     "summary": "Expansion of Hungary facility hiring 500+ engineers", "investment": 500, "date": "2025-10-01"},
-    {"company_name": "Huawei Middle East Infrastructure", "region": "Middle East", "industry": "Telecom",
-     "summary": "5G network rollout delayed due to regulatory review", "investment": 300, "date": "2025-09-28"},
-    {"company_name": "SAIC Motor Latin America", "region": "Latin America", "industry": "Automotive & Manufacturing",
-     "summary": "Joint venture with local distributor for vehicle assembly", "investment": 120, "date": "2025-10-03"},
-    {"company_name": "Longi Solar Africa Expansion", "region": "Africa", "industry": "Renewable Energy",
-     "summary": "Solar module production facility in South Africa – Phase 1 complete", "investment": 60, "date": "2025-09-20"}
-]
-df = pd.DataFrame(data)
-
-# -------------------- METRICS --------------------
-col1, col2, col3, col4 = st.columns(4)
+col1, col2 = st.columns([0.7, 0.3])
 with col1:
-    st.metric("Tracked Customers", "50")
+    st.markdown('<div class="main-title">Go-Global Customer Intelligence</div>', unsafe_allow_html=True)
+    st.markdown('<div class="subtitle">AI-Powered Decision Support System</div>', unsafe_allow_html=True)
 with col2:
-    st.metric("Active Opportunities", "47")
-with col3:
-    st.metric("Average Match Score", "81%")
-with col4:
-    st.metric("Recent Alerts", "8")
+    st.markdown("<div style='text-align:right'><button>📤 Export Report</button> <button>🔄 Sync Data</button></div>", unsafe_allow_html=True)
 
-# -------------------- MAIN LAYOUT --------------------
-left_col, right_col = st.columns([2.3, 1])
+st.markdown("---")
 
-# LEFT: PROJECT CARDS
+# ===================== METRICS =====================
+tracked_customers = df["company_name"].nunique()
+active_opps = len(df)
+avg_investment = df["investment"].mean() if "investment" in df.columns else 0
+recent_projects = df[df["date"] >= (datetime.now().date() - timedelta(days=7))] if "date" in df.columns else []
+
+col1, col2, col3, col4 = st.columns(4)
+col1.metric("Tracked Customers", tracked_customers)
+col2.metric("Active Opportunities", active_opps)
+col3.metric("Avg Investment", f"${avg_investment:,.0f}M")
+col4.metric("Recent Projects (7d)", len(recent_projects))
+
+st.markdown("")
+
+# ===================== LAYOUT =====================
+left_col, right_col = st.columns([0.65, 0.35])
+
+# ========== LEFT PANEL: PROJECT CARDS ==========
 with left_col:
     st.markdown("### Active Projects")
-    for _, row in df.iterrows():
+
+    # Optional filters
+    regions = st.multiselect("Filter by Region", sorted(df["region"].dropna().unique()))
+    industries = st.multiselect("Filter by Industry", sorted(df["industry"].dropna().unique()) if "industry" in df.columns else [])
+
+    filtered = df.copy()
+    if regions:
+        filtered = filtered[filtered["region"].isin(regions)]
+    if industries and "industry" in df.columns:
+        filtered = filtered[filtered["industry"].isin(industries)]
+
+    # Display cards
+    for _, row in filtered.iterrows():
         st.markdown(f"""
         <div class="project-card">
             <div class="project-title">{row['company_name']}</div>
-            <div class="project-meta">{row['region']} · {row['industry']}</div>
-            <div class="project-summary">{row['summary']}</div>
-            <div style="margin-top:6px; color:#666; font-size:0.85rem;">
-                💰 ${row['investment']}M &nbsp;·&nbsp; 📅 {row['date']}
+            <div class="project-summary">{row.get('summary', '')}</div>
+            <div style="margin-top: 0.5rem;">
+                <span class="tag">{row.get('region', '')}</span>
+                <span class="tag">{row.get('industry', '')}</span>
+                <span class="tag">${row.get('investment', 0):,.0f}M</span>
+                <span class="tag">{row.get('date', '')}</span>
             </div>
         </div>
         """, unsafe_allow_html=True)
 
-# RIGHT: SIDEBAR PANELS
+# ========== RIGHT PANEL ==========
 with right_col:
-    # ---- Regional Overview ----
-    st.markdown('<div class="sidebar-card"><div class="sidebar-title">Regional Overview</div>', unsafe_allow_html=True)
-    region_summary = df.groupby("region")["investment"].sum().reset_index()
-    fig = px.bar(region_summary, x="region", y="investment",
-                 title="", text_auto=True, height=250)
-    fig.update_layout(margin=dict(l=10, r=10, t=10, b=10), xaxis_title=None, yaxis_title="Investment ($M)")
-    st.plotly_chart(fig, use_container_width=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('<div class="right-panel">', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">📊 Regional Overview</div>', unsafe_allow_html=True)
 
-    # ---- Recent Insights ----
-    st.markdown('<div class="sidebar-card"><div class="sidebar-title">Recent Insights</div>', unsafe_allow_html=True)
-    for i in range(3):
-        st.markdown(f"• {df.iloc[i]['company_name']} – update {i+1} days ago")
-    st.markdown('</div>', unsafe_allow_html=True)
+    # Chart: average investment by region
+    if "region" in df.columns:
+        chart_data = df.groupby("region")["investment"].sum().reset_index()
+        fig = px.bar(chart_data, x="region", y="investment", color="region",
+                     labels={"investment": "Total Investment (M USD)", "region": "Region"},
+                     title=None)
+        fig.update_layout(showlegend=False, height=300, margin=dict(l=0, r=0, t=0, b=0))
+        st.plotly_chart(fig, use_container_width=True)
 
-    # ---- Quick Actions ----
-    st.markdown("""
-    <div class="sidebar-card">
-        <div class="sidebar-title">Quick Actions</div>
-        <button class="css-1cpxqw2 edgvbvh10">Generate Weekly Report</button><br><br>
-        <button class="css-1cpxqw2 edgvbvh10">Schedule Team Review</button><br><br>
-        <button class="css-1cpxqw2 edgvbvh10">Export Customer Insights</button>
-    </div>
-    """, unsafe_allow_html=True)
+    # Recent insights
+    st.markdown('<div class="section-title">🕒 Recent Insights</div>', unsafe_allow_html=True)
+    if "date" in df.columns:
+        recent = df.sort_values("date", ascending=False).head(5)
+        for _, r in recent.iterrows():
+            st.markdown(f"- **{r['company_name']}** — {r['summary'][:70]}...  *(updated {r['date']})*")
+
+    st.markdown('<div class="section-title">⚙️ Quick Actions</div>', unsafe_allow_html=True)
+    st.button("Generate Weekly Report")
+    st.button("Schedule Team Review")
+    st.button("Export Customer Insights")
+
+    st.markdown("</div>", unsafe_allow_html=True)
