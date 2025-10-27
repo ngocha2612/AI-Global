@@ -59,10 +59,10 @@ with col1:
 with col2:
     st.metric("Active Projects", active_projects)
 ###
-with col3:
-    st.metric("Avg Investment", f"${avg_investment:,.0f}M" if avg_investment else "N/A")
-with col4:
-    st.metric("Recent (7d)", len(recent_projects))
+#with col3:
+#    st.metric("Avg Investment", f"${avg_investment:,.0f}M" if avg_investment else "N/A")
+#with col4:
+#    st.metric("Recent (7d)", len(recent_projects))
 ###
 
 st.divider()
