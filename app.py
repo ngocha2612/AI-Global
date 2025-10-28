@@ -83,6 +83,11 @@ with left_col:
         for _, row in page_df.iterrows():
             with st.container():
                 st.subheader(f"**{row['company_name']}**")
+                
+                # Add link if available
+                if pd.notna(row.get("link", None)):
+                    st.markdown(f"[🔗]({row['link']})", unsafe_allow_html=True)
+                
                 st.markdown(f"📍 {row.get('host_country', 'N/A')} • {row.get('sector', 'N/A')}")
                 #st.markdown(f"**Project Scope:** {row.get('project_type', 'N/A')}")
                 st.write(row.get("summary_of_project", "No summary available."))
