@@ -58,7 +58,7 @@ with col2:
 st.divider()
 
 # -------------------- PAGINATION SETUP --------------------
-items_per_page = 5  # Number of project cards per page
+items_per_page = 10  # Number of project cards per page
 total_projects = len(filtered_df)
 total_pages = max(1, (total_projects + items_per_page - 1) // items_per_page)
 
