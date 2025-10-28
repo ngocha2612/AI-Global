@@ -94,14 +94,10 @@ with left_col:
                         f"<h3><a href='{row['link']}' target='_blank' style='text-decoration:none;'>🔗</a> {row['company_name']} • {row.get('host_country', 'N/A')}</h3> ",
                         unsafe_allow_html=True,
                     )
-
-                
-                
                 else:
                     st.markdown(f"### {row['company_name']}")
-
                 
-                st.markdown(f"• {row.get('sector', 'N/A')}")
+                st.caption(f"⚙️ {row.get('sector', 'N/A')}")
                 #st.markdown(f"**Project Scope:** {row.get('project_type', 'N/A')}")
                 st.write(row.get("summary_of_project", "No summary available."))
                 st.markdown(f"📅 **Project Stage:** {row.get('project_stage', 'N/A')}")
