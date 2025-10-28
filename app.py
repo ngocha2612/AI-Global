@@ -84,10 +84,10 @@ with left_col:
             with st.container():
                 st.subheader(f"**{row['company_name']}**")
                 st.markdown(f"📍 {row.get('host_country', 'N/A')} • {row.get('sector', 'N/A')}")
-                st.markdown(f"**Project Scope:** {row.get('project_type', 'N/A')}")
+                #st.markdown(f"**Project Scope:** {row.get('project_type', 'N/A')}")
                 st.write(row.get("summary_of_project", "No summary available."))
                 st.markdown(f"📅 **Project Stage:** {row.get('project_stage', 'N/A')}")
-                st.markdown(f"💰 **Investment:** {row.get('investment_amount', 'N/A')}")
+                #st.markdown(f"💰 **Investment:** {row.get('investment_amount', 'N/A')}")
                 st.caption(f"Last updated: {row.get('date', 'N/A')}")
                 st.divider()
 
