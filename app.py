@@ -91,9 +91,12 @@ with left_col:
                     
                 if pd.notna(row.get("link", None)):
                     st.markdown(
-                        f"### [🔗]({row['link']}) {row['company_name']} 📍 {row.get('host_country', 'N/A')} ",
+                        f"###  <a href='{row['link']}' target='_blank' style='text-decoration:none;'>🔗</a></h3> {row['company_name']} • {row.get('host_country', 'N/A')} ",
                         unsafe_allow_html=True,
                     )
+
+                
+                
                 else:
                     st.markdown(f"### {row['company_name']}")
 
