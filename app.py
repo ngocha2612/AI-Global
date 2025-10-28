@@ -91,14 +91,14 @@ with left_col:
                     
                 if pd.notna(row.get("link", None)):
                     st.markdown(
-                        f"### {row['company_name']} [🔗]({row['link']})",
+                        f"### [🔗]({row['link']}) {row['company_name']} 📍 {row.get('host_country', 'N/A')} ",
                         unsafe_allow_html=True,
                     )
                 else:
                     st.markdown(f"### {row['company_name']}")
 
                 
-                st.markdown(f"📍 {row.get('host_country', 'N/A')} • {row.get('sector', 'N/A')}")
+                st.markdown(f"• {row.get('sector', 'N/A')}")
                 #st.markdown(f"**Project Scope:** {row.get('project_type', 'N/A')}")
                 st.write(row.get("summary_of_project", "No summary available."))
                 st.markdown(f"📅 **Project Stage:** {row.get('project_stage', 'N/A')}")
